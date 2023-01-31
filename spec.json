@@ -1,0 +1,2800 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "demo Service API",
+        "version": "2.0",
+        "contact": {
+            "email": "admin@demo.com"
+        },
+        "description": "# demo Service API Documentation\n\nThe demo Service is a web application that interacts with the entire demo ecosystem in various aspects, such as accessing blockchain data, storing users' private data, retrieving and storing market data, and interacting with social media. \n\nThe main focus of this project is to provide data to demo blockchain users by serving them in standardized JSON format and exposing a public RESTful API. The project is planned to split into several smaller components. The overall strategy is to provide one component for one specific purpose. \n\nAs a pure backend project, it is designed to meet the requirements of frontend developers, especially demo Hub and demo Mobile.\n\nThe API can be accessed at `https://service.demo.com`.\nIt is also possible to access the Testnet network at `https://testnet-service.demo.com`.\n\nThe demo Service API is compatible with RESTful guidelines. The specification below contains numerous examples of how to use the API in practice.\n\n## Endpoint Logic\n\nThe logic of the endpoints are as follows:\n- the structure is always based on `/<root_entity>/<object>/<properties>`\n\n## Responses\n\nAll responses are returned in the JSON format - `application/json`.\n\nEach API request has the following structure:\n\n```\n{\n  \"data\": {}, // Contains the requested data\n  \"meta\": {}, // Contains additional metadata, e.g. the values of `limit` and `offset`\n  \"links\": {} // Contains links to connected API calls from here, e.g. pagination links\n}\n```\n\n## The `account_id` Parameter\n\nUsers that want to retrieve account data can rely on its unique properties, namely the Account ID (ex. `lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99`), the public key or a registered delegate name.\n\n## The Date Format\n\nis different to the original demo Core API, as all timestamps used by the demo Service are now in the UNIX timestamp format. The blockchain dates are always expressed as integers, and the epoch date is equal to the number of seconds since 1970-01-01 00:00:00.\n",
+        "license": {
+            "name": "GPL v3.0",
+            "url": "https://www.gnu.org/licenses/gpl-3.0.en.html"
+        }
+    },
+    "basePath": "/api/v2",
+    "tags": [
+        {
+            "name": "Accounts",
+            "description": "demo Network account API calls"
+        },
+        {
+            "name": "Blocks",
+            "description": "demo Network block API calls"
+        },
+        {
+            "name": "Peers",
+            "description": "demo Network peer API calls"
+        },
+        {
+            "name": "Transactions",
+            "description": "demo Network transaction API calls"
+        },
+        {
+            "name": "Network",
+            "description": "demo Network utils"
+        },
+        {
+            "name": "Transaction Export",
+            "description": "demo Network transaction history export API"
+        }
+    ],
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "paths": {
+        "/accounts": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/address"
+                    },
+                    {
+                        "$ref": "#/parameters/publicKey"
+                    },
+                    {
+                        "$ref": "#/parameters/username"
+                    },
+                    {
+                        "$ref": "#/parameters/isDelegate"
+                    },
+                    {
+                        "$ref": "#/parameters/status"
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Delegate name full text search phrase",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 20
+                    },
+                    {
+                        "$ref": "#/parameters/limit"
+                    },
+                    {
+                        "$ref": "#/parameters/offset"
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Fields to sort results by",
+                        "required": false,
+                        "type": "string",
+                        "enum": [
+                            "balance:asc",
+                            "balance:desc",
+                            "rank:asc",
+                            "rank:desc"
+                        ]
+                    }
+                ],
+                "summary": "Requests account data",
+                "description": "Returns account data\n RPC => get.accounts",
+                "responses": {
+                    "200": {
+                        "description": "array of accounts with details",
+                        "schema": {
+                            "$ref": "#/definitions/AccountsWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/blocks": {
+            "get": {
+                "tags": [
+                    "Blocks"
+                ],
+                "summary": "Requests blocks data",
+                "description": "Returns block data\n RPC => get.blocks",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/blockId"
+                    },
+                    {
+                        "$ref": "#/parameters/height"
+                    },
+                    {
+                        "$ref": "#/parameters/timestamp"
+                    },
+                    {
+                        "$ref": "#/parameters/generatorAddress"
+                    },
+                    {
+                        "$ref": "#/parameters/generatorPublicKey"
+                    },
+                    {
+                        "$ref": "#/parameters/generatorUsername"
+                    },
+                    {
+                        "$ref": "#/parameters/limit"
+                    },
+                    {
+                        "$ref": "#/parameters/offset"
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Fields to sort results by",
+                        "required": false,
+                        "type": "string",
+                        "enum": [
+                            "height:asc",
+                            "height:desc",
+                            "timestamp:asc",
+                            "timestamp:desc"
+                        ],
+                        "default": "height:desc"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "array of blocks",
+                        "schema": {
+                            "$ref": "#/definitions/BlocksWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/fees": {
+            "get": {
+                "tags": [
+                    "Fee"
+                ],
+                "summary": "Requests fee estimates",
+                "description": "Returns fee estimates\n RPC => get.fees",
+                "responses": {
+                    "200": {
+                        "description": "fee estimate per byte",
+                        "schema": {
+                            "$ref": "#/definitions/FeeEstimateEnvelope"
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/responses/notFound"
+                    }
+                }
+            }
+        },
+        "/forgers": {
+            "get": {
+                "tags": [
+                    "Forgers"
+                ],
+                "summary": "Requests next forgers list",
+                "description": "Returns forgers list\n RPC => get.forgers",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/limit"
+                    },
+                    {
+                        "$ref": "#/parameters/offset"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "list of next forgers",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ForgersWithEnvelope"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/market/prices": {
+            "get": {
+                "tags": [
+                    "Market"
+                ],
+                "parameters": [],
+                "summary": "Requests market prices",
+                "description": "Returns market prices\n RPC => get.market.prices",
+                "responses": {
+                    "200": {
+                        "description": "array of market prices",
+                        "schema": {
+                            "$ref": "#/definitions/MarketPricesWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/network/statistics": {
+            "get": {
+                "tags": [
+                    "Network"
+                ],
+                "summary": "Requests network statistics",
+                "description": "Returns network statistics data\n RPC => get.network.statistics",
+                "responses": {
+                    "200": {
+                        "description": "network statistics info",
+                        "schema": {
+                            "$ref": "#/definitions/NetworkStatistics"
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/responses/notFound"
+                    }
+                }
+            }
+        },
+        "/network/status": {
+            "get": {
+                "tags": [
+                    "Network"
+                ],
+                "summary": "Requests network status",
+                "description": "Returns network status\n RPC => get.network.status",
+                "responses": {
+                    "200": {
+                        "description": "network status info",
+                        "schema": {
+                            "$ref": "#/definitions/NetworkStatus"
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/responses/notFound"
+                    }
+                }
+            }
+        },
+        "/newsfeed": {
+            "get": {
+                "tags": [
+                    "Newsfeed"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/source"
+                    },
+                    {
+                        "$ref": "#/parameters/limit"
+                    },
+                    {
+                        "$ref": "#/parameters/offset"
+                    }
+                ],
+                "summary": "Requests news/blog posts",
+                "description": "Returns news/blog posts\n RPC => get.newsfeed.articles",
+                "responses": {
+                    "200": {
+                        "description": "array of newsfeed articles",
+                        "schema": {
+                            "$ref": "#/definitions/NewsfeedWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/peers": {
+            "get": {
+                "tags": [
+                    "Peers"
+                ],
+                "summary": "Requests peers data",
+                "description": "Returns peers data\n RPC => get.peers",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/ip"
+                    },
+                    {
+                        "$ref": "#/parameters/networkVersion"
+                    },
+                    {
+                        "$ref": "#/parameters/state"
+                    },
+                    {
+                        "$ref": "#/parameters/height"
+                    },
+                    {
+                        "$ref": "#/parameters/limit"
+                    },
+                    {
+                        "$ref": "#/parameters/offset"
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Fields to sort results by",
+                        "required": false,
+                        "type": "string",
+                        "enum": [
+                            "height:asc",
+                            "height:desc",
+                            "networkVersion:asc",
+                            "networkVersion:desc"
+                        ],
+                        "default": "height:desc"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "array of peers with details",
+                        "schema": {
+                            "$ref": "#/definitions/PeersWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/peers/connected": {
+            "get": {
+                "tags": [
+                    "Peers"
+                ],
+                "summary": "Requests connected peers data",
+                "description": "Returns connected peers data\n RPC => undefined",
+                "responses": {
+                    "200": {
+                        "description": "array of connected peers",
+                        "schema": {
+                            "$ref": "#/definitions/PeersWithEnvelope"
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/responses/notFound"
+                    }
+                }
+            }
+        },
+        "/peers/disconnected": {
+            "get": {
+                "tags": [
+                    "Peers"
+                ],
+                "summary": "Requests disconnected peers data",
+                "description": "Returns connected peers data\n RPC => undefined",
+                "responses": {
+                    "200": {
+                        "description": "array of disconnected peers",
+                        "schema": {
+                            "$ref": "#/definitions/PeersWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/responses/badParameter"
+                    },
+                    "404": {
+                        "$ref": "#/responses/notFound"
+                    }
+                }
+            }
+        },
+        "/transactions": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Requests transactions data",
+                "description": "Returns transactions data\n RPC => get.transactions",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/transactionId"
+                    },
+                    {
+                        "$ref": "#/parameters/moduleAssetId"
+                    },
+                    {
+                        "$ref": "#/parameters/moduleAssetName"
+                    },
+                    {
+                        "$ref": "#/parameters/address"
+                    },
+                    {
+                        "$ref": "#/parameters/senderAddress"
+                    },
+                    {
+                        "$ref": "#/parameters/senderPublicKey"
+                    },
+                    {
+                        "$ref": "#/parameters/senderUsername"
+                    },
+                    {
+                        "$ref": "#/parameters/recipientAddress"
+                    },
+                    {
+                        "$ref": "#/parameters/recipientPublicKey"
+                    },
+                    {
+                        "$ref": "#/parameters/recipientUsername"
+                    },
+                    {
+                        "$ref": "#/parameters/amount"
+                    },
+                    {
+                        "$ref": "#/parameters/timestamp"
+                    },
+                    {
+                        "$ref": "#/parameters/nonce"
+                    },
+                    {
+                        "$ref": "#/parameters/blockId"
+                    },
+                    {
+                        "$ref": "#/parameters/height"
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Delegate name full text search phrase",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 20
+                    },
+                    {
+                        "$ref": "#/parameters/data"
+                    },
+                    {
+                        "$ref": "#/parameters/limit"
+                    },
+                    {
+                        "$ref": "#/parameters/offset"
+                    },
+                    {
+                        "$ref": "#/parameters/includePending"
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Fields to sort results by",
+                        "required": false,
+                        "type": "string",
+                        "enum": [
+                            "amount:asc",
+                            "amount:desc",
+                            "timestamp:asc",
+                            "timestamp:desc"
+                        ],
+                        "default": "timestamp:desc"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "array of transactions with details",
+                        "schema": {
+                            "$ref": "#/definitions/TransactionsWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Post transactions",
+                "description": "Post transactions and return transactionId\n RPC => post.transactions",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/transaction"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Broadcast transaction",
+                        "schema": {
+                            "$ref": "#/definitions/postTransactionWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/badRequestEnvelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/serverErrorEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/schemas": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Requests transactions schema",
+                "description": "Returns transaction schemas\n RPC => get.transactions.schemas",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/moduleAssetId"
+                    },
+                    {
+                        "$ref": "#/parameters/moduleAssetName"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "array of transaction schemas",
+                        "schema": {
+                            "$ref": "#/definitions/TransactionsSchemaWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/notFoundEnvelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/statistics/day": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Requests transaction statistics day",
+                "description": "Returns transaction statistics aggregates per day\n RPC => get.transactions.statistics.day",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/offset"
+                    },
+                    {
+                        "$ref": "#/parameters/limit"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "array of transactions statistics aggregated per day",
+                        "schema": {
+                            "$ref": "#/definitions/TransactionsStatisticsWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/transactions/statistics/month": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Requests transaction statistics month",
+                "description": "Returns transaction statistics aggregated per month\n RPC => get.transactions.statistics.month",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/offset"
+                    },
+                    {
+                        "$ref": "#/parameters/limit"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "array of transactions statistics aggregated per month",
+                        "schema": {
+                            "$ref": "#/definitions/TransactionsStatisticsWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/votes_received": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Requests votes received data",
+                "description": "Returns votes received data\n RPC => get.votes_received",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/address"
+                    },
+                    {
+                        "$ref": "#/parameters/username"
+                    },
+                    {
+                        "$ref": "#/parameters/publicKey"
+                    },
+                    {
+                        "$ref": "#/parameters/aggregate"
+                    },
+                    {
+                        "$ref": "#/parameters/limit"
+                    },
+                    {
+                        "$ref": "#/parameters/offset"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "array of votes received",
+                        "schema": {
+                            "$ref": "#/definitions/VotesReceivedWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/votes_sent": {
+            "get": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Requests votes sent data",
+                "description": "Returns votes sent data\n RPC => get.votes_sent",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/address"
+                    },
+                    {
+                        "$ref": "#/parameters/username"
+                    },
+                    {
+                        "$ref": "#/parameters/publicKey"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "array of votes sent",
+                        "schema": {
+                            "$ref": "#/definitions/VotesSentWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/exports/{filename}": {
+            "get": {
+                "tags": [
+                    "Transaction Export"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/filename"
+                    }
+                ],
+                "summary": "Requests transaction history for a given account",
+                "description": "Returns transaction history\n RPC => undefined",
+                "responses": {
+                    "200": {
+                        "description": "CSV file"
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/transactions/export": {
+            "get": {
+                "tags": [
+                    "Transaction Export"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/address"
+                    },
+                    {
+                        "$ref": "#/parameters/publicKey"
+                    },
+                    {
+                        "$ref": "#/parameters/interval"
+                    }
+                ],
+                "summary": "Requests to schedule export of transaction history for a given account",
+                "description": "Returns transaction history export scheduling information\n RPC => get.transactions.export",
+                "responses": {
+                    "200": {
+                        "description": "CSV file to download",
+                        "schema": {
+                            "$ref": "#/definitions/ExportFileUrlWithEnvelope"
+                        }
+                    },
+                    "202": {
+                        "description": "Schedule transaction history export",
+                        "schema": {
+                            "$ref": "#/definitions/ExportScheduledWithEnvelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad input parameter"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        }
+    },
+    "parameters": {
+        "publickey": {
+            "name": "publickey",
+            "in": "query",
+            "description": "Public key to query",
+            "type": "string",
+            "format": "publicKey",
+            "minLength": 1
+        },
+        "username": {
+            "name": "username",
+            "in": "query",
+            "description": "Delegate username to query",
+            "type": "string",
+            "format": "username",
+            "minLength": 1,
+            "maxLength": 20
+        },
+        "status": {
+            "name": "status",
+            "in": "query",
+            "description": "Delegate account status",
+            "type": "string",
+            "minLength": 1
+        },
+        "isDelegate": {
+            "name": "isDelegate",
+            "in": "query",
+            "description": "Filter delegate accounts",
+            "type": "string",
+            "minLength": 1
+        },
+        "publicKey": {
+            "name": "publicKey",
+            "in": "query",
+            "description": "Public key of the account to query",
+            "type": "string",
+            "format": "publicKey",
+            "minLength": 64,
+            "maxLength": 64
+        },
+        "aggregate": {
+            "name": "aggregate",
+            "in": "query",
+            "description": "Returns aggregated votes",
+            "type": "boolean",
+            "default": false
+        },
+        "blockId": {
+            "name": "blockId",
+            "in": "query",
+            "description": "Block id to query",
+            "type": "string",
+            "format": "id",
+            "minLength": 1,
+            "maxLength": 20
+        },
+        "generatorPublicKey": {
+            "name": "generatorPublicKey",
+            "in": "query",
+            "description": "Public key to query",
+            "type": "string",
+            "format": "publicKey",
+            "minLength": 1
+        },
+        "generatorUsername": {
+            "name": "generatorUsername",
+            "in": "query",
+            "description": "Delegate username to query",
+            "type": "string",
+            "format": "username",
+            "minLength": 1,
+            "maxLength": 20
+        },
+        "generatorAddress": {
+            "name": "generatorAddress",
+            "in": "query",
+            "description": "demo account address",
+            "type": "string",
+            "format": "address",
+            "minLength": 1,
+            "maxLength": 22
+        },
+        "limit": {
+            "in": "query",
+            "name": "limit",
+            "description": "Limit applied to results",
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10
+        },
+        "offset": {
+            "name": "offset",
+            "in": "query",
+            "description": "Offset value for results",
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "default": 0
+        },
+        "height": {
+            "name": "height",
+            "in": "query",
+            "description": "Query for block(s) by height or a height range (fromHeight:toHeight, both inclusive)",
+            "type": "string",
+            "minimum": 1
+        },
+        "timestamp": {
+            "name": "timestamp",
+            "in": "query",
+            "description": "Range fromTimestamp:toTimestamp",
+            "type": "string",
+            "minimum": 1
+        },
+        "address": {
+            "name": "address",
+            "in": "query",
+            "description": "Address of the account to query",
+            "type": "string",
+            "format": "address",
+            "minLength": 41,
+            "maxLength": 41
+        },
+        "search": {
+            "in": "query",
+            "name": "search",
+            "required": true,
+            "description": "Search query",
+            "type": "string"
+        },
+        "source": {
+            "name": "source",
+            "in": "query",
+            "description": "Source name",
+            "type": "string"
+        },
+        "ip": {
+            "name": "ip",
+            "in": "query",
+            "description": "IP of the node or delegate",
+            "type": "string",
+            "format": "ip"
+        },
+        "networkVersion": {
+            "name": "networkVersion",
+            "in": "query",
+            "description": "Network version",
+            "type": "string",
+            "format": "version"
+        },
+        "state": {
+            "name": "state",
+            "in": "query",
+            "description": "Current state of the network",
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "maximum": 2
+        },
+        "transactionId": {
+            "name": "transactionId",
+            "in": "query",
+            "description": "Transaction id to query",
+            "type": "string",
+            "format": "id",
+            "minLength": 1,
+            "maxLength": 20,
+            "pattern": "^\\d*$"
+        },
+        "moduleAssetId": {
+            "name": "moduleAssetId",
+            "in": "query",
+            "description": "Combination of module:asset Id",
+            "type": "string",
+            "minLength": 1
+        },
+        "moduleAssetName": {
+            "name": "moduleAssetName",
+            "in": "query",
+            "description": "Combination of module:asset Name",
+            "type": "string",
+            "minLength": 1
+        },
+        "recipientAddress": {
+            "name": "recipientAddress",
+            "in": "query",
+            "description": "demo account address",
+            "type": "string",
+            "minLength": 1
+        },
+        "recipientPublicKey": {
+            "name": "recipientPublicKey",
+            "in": "query",
+            "description": "demo account public key",
+            "type": "string",
+            "minLength": 1
+        },
+        "recipientUsername": {
+            "name": "recipientUsername",
+            "in": "query",
+            "description": "demo account username",
+            "type": "string",
+            "minLength": 1
+        },
+        "senderAddress": {
+            "name": "senderAddress",
+            "in": "query",
+            "description": "demo account address",
+            "type": "string",
+            "minLength": 1
+        },
+        "senderPublicKey": {
+            "name": "senderPublicKey",
+            "in": "query",
+            "description": "demo account public key",
+            "type": "string",
+            "minLength": 1
+        },
+        "senderUsername": {
+            "name": "senderUsername",
+            "in": "query",
+            "description": "demo account username",
+            "type": "string",
+            "minLength": 1
+        },
+        "amount": {
+            "name": "amount",
+            "in": "query",
+            "description": "Amount range of from:to amount",
+            "type": "string",
+            "minimum": 0
+        },
+        "transaction": {
+            "name": "transaction",
+            "in": "query",
+            "description": "Binary payload",
+            "type": "string",
+            "minLength": 1
+        },
+        "data": {
+            "name": "data",
+            "in": "query",
+            "description": "Query by asset data",
+            "type": "string",
+            "minLength": 1
+        },
+        "nonce": {
+            "name": "nonce",
+            "in": "query",
+            "description": "Query by nonce",
+            "type": "string",
+            "minLength": 1
+        },
+        "includePending": {
+            "name": "includePending",
+            "in": "query",
+            "description": "Retrieve pending transactions",
+            "type": "boolean",
+            "minLength": 1,
+            "default": false
+        },
+        "interval": {
+            "name": "interval",
+            "in": "query",
+            "description": "Date interval to query in YYYY-MM-DD format",
+            "type": "string",
+            "format": "interval",
+            "minLength": 10,
+            "maxLength": 21
+        },
+        "filename": {
+            "name": "filename",
+            "in": "path",
+            "description": "Filename",
+            "required": true,
+            "type": "string",
+            "minLength": 80,
+            "maxLength": 80
+        }
+    },
+    "definitions": {
+        "Account": {
+            "type": "object",
+            "required": [
+                "address"
+            ],
+            "properties": {
+                "summary": {
+                    "type": "object",
+                    "properties": {
+                        "address": {
+                            "type": "string",
+                            "format": "address",
+                            "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                            "description": "The demo Address is the human readable representation of the accounts owners' public key.\nIt is 41 character long address thats begins with `lsk`.\n"
+                        },
+                        "balance": {
+                            "type": "string",
+                            "example": "4448642000"
+                        },
+                        "publicKey": {
+                            "type": "string",
+                            "format": "publicKey",
+                            "example": "b1d6bc6c7edd0673f5fed0681b73de6eb70539c21278b300f07ade277e1962cd",
+                            "description": "The public key is derived from the private key of the owner of the account.\nIt can be used to validate that the private key belongs to the owner, but not provide access to the owners private key.\n"
+                        },
+                        "isDelegate": {
+                            "type": "boolean",
+                            "example": "false"
+                        },
+                        "isMultisignature": {
+                            "type": "boolean",
+                            "example": "false"
+                        }
+                    }
+                },
+                "token": {
+                    "type": "object",
+                    "properties": {
+                        "balance": {
+                            "type": "string",
+                            "example": "4448642000"
+                        }
+                    }
+                },
+                "sequence": {
+                    "type": "object",
+                    "properties": {
+                        "nonce": {
+                            "type": "string",
+                            "example": "1"
+                        }
+                    }
+                },
+                "knowledge": {
+                    "type": "object",
+                    "properties": {
+                        "owner": {
+                            "type": "string",
+                            "example": "genesis_84"
+                        },
+                        "description": {
+                            "type": "string",
+                            "example": "Genesis wallet"
+                        }
+                    }
+                },
+                "keys": {
+                    "type": "object",
+                    "properties": {
+                        "numberOfReqSignatures": {
+                            "type": "integer",
+                            "format": "int32",
+                            "example": "1"
+                        },
+                        "mandatoryKeys": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "example": "689b9a40aa11cbc8327d5eeebed9a1052940730f9c34cffb33ae591131141349"
+                            }
+                        },
+                        "optionalKeys": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "example": "478842a844914f18a1c620a6494bf9931d0a862e96212bf5fc6f3ca18658febe"
+                            }
+                        },
+                        "members": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "address": {
+                                        "type": "string",
+                                        "format": "address",
+                                        "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                                        "description": "The demo Address is the human readable representation of the accounts owners' public key.\nIt is 41 character long address thats begins with `lsk`.\n"
+                                    },
+                                    "publicKey": {
+                                        "type": "string",
+                                        "format": "publicKey",
+                                        "example": "968ba2fa993ea9dc27ed740da0daf49eddd740dbd7cb1cb4fc5db3a20baf341b",
+                                        "description": "The public key is derived from the private key of the owner of the account.\nIt can be used to validate that the private key belongs to the owner, but not provide access to the owners private key.\n"
+                                    },
+                                    "isMandatory": {
+                                        "type": "boolean",
+                                        "example": "false"
+                                    }
+                                }
+                            }
+                        },
+                        "memberships": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "address": {
+                                        "type": "string",
+                                        "format": "address",
+                                        "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                                        "description": "The demo Address is the human readable representation of the accounts owners' public key.\nIt is 41 character long address thats begins with `lsk`.\n"
+                                    },
+                                    "publicKey": {
+                                        "type": "string",
+                                        "format": "publicKey",
+                                        "example": "968ba2fa993ea9dc27ed740da0daf49eddd740dbd7cb1cb4fc5db3a20baf341b",
+                                        "description": "The public key is derived from the private key of the owner of the account.\nIt can be used to validate that the private key belongs to the owner, but not provide access to the owners private key.\n"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "dpos": {
+                    "type": "object",
+                    "properties": {
+                        "delegate": {
+                            "$ref": "#/definitions/delegate"
+                        },
+                        "sentVotes": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "delegateAddress": {
+                                        "type": "string",
+                                        "format": "address",
+                                        "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                                        "description": "The demo Address is the human readable representation of the accounts owners' public key.\nIt is 41 character long address thats begins with `lsk`.\n"
+                                    },
+                                    "amount": {
+                                        "type": "string",
+                                        "example": "150000000",
+                                        "description": "Amount of demo to be transferred in this transaction.\n"
+                                    }
+                                }
+                            }
+                        },
+                        "unlocking": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "delegateAddress": {
+                                        "type": "string",
+                                        "format": "address",
+                                        "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                                        "description": "The demo Address is the human readable representation of the accounts owners' public key.\nIt is 41 character long address thats begins with `lsk`.\n"
+                                    },
+                                    "amount": {
+                                        "type": "string",
+                                        "example": "150000000",
+                                        "description": "Amount of demo to be transferred in this transaction.\n"
+                                    },
+                                    "height": {
+                                        "type": "object",
+                                        "properties": {
+                                            "start": {
+                                                "type": "string",
+                                                "example": "10",
+                                                "description": ""
+                                            },
+                                            "end": {
+                                                "type": "string",
+                                                "example": "1000",
+                                                "description": ""
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delegate": {
+            "type": "object",
+            "required": [
+                "username"
+            ],
+            "properties": {
+                "producedBlocks": {
+                    "type": "integer",
+                    "example": 55222,
+                    "minimum": 1,
+                    "description": ""
+                },
+                "rank": {
+                    "type": "integer",
+                    "example": 93,
+                    "minimum": 1,
+                    "description": ""
+                },
+                "rewards": {
+                    "type": "string",
+                    "example": "109000000000",
+                    "description": "Amount of rewards in LSK collected during forging"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "genesis_84",
+                    "description": ""
+                },
+                "isBanned": {
+                    "type": "boolean",
+                    "example": "false"
+                },
+                "lastForgedHeight": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "consecutiveMissedBlocks": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "totalVotesReceived": {
+                    "type": "string",
+                    "example": "109000000000",
+                    "description": "Total votes received"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "active",
+                    "description": ""
+                }
+            }
+        },
+        "AccountsWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "description": "List of accounts",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Account"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/Pagination"
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        },
+        "VotesReceivedWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "description": "List of votes",
+                    "type": "object",
+                    "properties": {
+                        "account": {
+                            "type": "object",
+                            "properties": {
+                                "address": {
+                                    "type": "string",
+                                    "format": "address",
+                                    "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                                    "description": "The demo Address is the human readable representation of the accounts owners' public key.\nIt is 41 character long address thats begins with `lsk`.\n"
+                                },
+                                "username": {
+                                    "type": "string",
+                                    "example": "genesis_84",
+                                    "description": ""
+                                }
+                            }
+                        },
+                        "votes": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Vote"
+                            }
+                        }
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/Pagination"
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        },
+        "VotesSentWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "description": "List of votes",
+                    "type": "object",
+                    "properties": {
+                        "account": {
+                            "type": "object",
+                            "properties": {
+                                "address": {
+                                    "type": "string",
+                                    "format": "address",
+                                    "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                                    "description": "The demo Address is the human readable representation of the accounts owners' public key.\nIt is 41 character long address thats begins with `lsk`.\n"
+                                },
+                                "username": {
+                                    "type": "string",
+                                    "example": "genesis_84",
+                                    "description": ""
+                                },
+                                "votesUsed": {
+                                    "type": "integer",
+                                    "example": 10,
+                                    "description": ""
+                                }
+                            }
+                        },
+                        "votes": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Vote"
+                            }
+                        }
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/Pagination"
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        },
+        "Vote": {
+            "type": "object",
+            "required": [
+                "address",
+                "amount",
+                "username"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "format": "address",
+                    "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                    "description": "demo Address of the delegate the queried account voted for."
+                },
+                "amount": {
+                    "type": "string",
+                    "example": 1081560729258
+                },
+                "username": {
+                    "type": "string",
+                    "format": "username",
+                    "example": "demohq",
+                    "description": "Username of the delegate the queried account voted for."
+                }
+            }
+        },
+        "Block": {
+            "type": "object",
+            "required": [
+                "id",
+                "height",
+                "timestamp",
+                "numberOfTransactions",
+                "totalAmount",
+                "totalFee",
+                "reward",
+                "totalForged"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "id",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "example": "01967dba384998026fe028119bd099ecf073c05c045381500a93d1a7c7307e5b",
+                    "description": "Unique identifier of the block.\nDerived from the block signature.\n"
+                },
+                "height": {
+                    "type": "integer",
+                    "example": 8344448,
+                    "minimum": 1,
+                    "description": "Height of the network, when the block got forged.\nThe height of the networks represents the number of blocks,\nthat have been forged on the network since Genesis Block.\n"
+                },
+                "version": {
+                    "type": "integer",
+                    "example": 0,
+                    "minimum": 0,
+                    "description": "Versioning for future upgrades of the demo protocol."
+                },
+                "timestamp": {
+                    "type": "integer",
+                    "example": 85944650,
+                    "description": "UNIX Timestamp"
+                },
+                "generatorAddress": {
+                    "type": "string",
+                    "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                    "description": "Delegate address."
+                },
+                "generatorPublicKey": {
+                    "type": "string",
+                    "example": "6e904b2f678eb3b6c3042acb188a607d903d441d61508d047fe36b3c982995c8",
+                    "description": "Delegate public key."
+                },
+                "generatorUsername": {
+                    "type": "string",
+                    "example": "genesis_13",
+                    "description": "Delegate registered name."
+                },
+                "transactionRoot": {
+                    "type": "string",
+                    "format": "hex",
+                    "example": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "description": "Hash of the payload of the block.\nThe payload of a block is comprised of the transactions contained in the block.\nFor each type of transaction a different maximum size exists for the payload.\n"
+                },
+                "signature": {
+                    "type": "string",
+                    "format": "signature",
+                    "example": "a3733254aad600fa787d6223002278c3400be5e8ed4763ae27f9a15b80e20c22ac9259dc926f4f4cabdf0e4f8cec49308fa8296d71c288f56b9d1e11dfe81e07",
+                    "description": "Derived from a SHA-256 hash of the block header,\nthat is signed by the private key of the delegate who forged the block.\n"
+                },
+                "previousBlockId": {
+                    "type": "string",
+                    "format": "id",
+                    "example": "827080df7829cd2757501a85f80a0767fcb40615304b701c2890dbbaf214bb89",
+                    "description": "The id of the previous block of the chain."
+                },
+                "numberOfTransactions": {
+                    "type": "integer",
+                    "example": 15,
+                    "description": "The number of transactions processed in the block."
+                },
+                "totalAmount": {
+                    "type": "string",
+                    "example": "150000000",
+                    "description": "The total amount of demo transferred."
+                },
+                "totalBurnt": {
+                    "type": "string",
+                    "example": "0",
+                    "description": "Total amount of LSK that have been burnt in this Block"
+                },
+                "totalFee": {
+                    "type": "string",
+                    "example": "15000000",
+                    "description": "The total amount of fees associated with the block."
+                },
+                "reward": {
+                    "type": "string",
+                    "example": "50000000",
+                    "description": "The demo reward for the delegate."
+                },
+                "totalForged": {
+                    "type": "string",
+                    "example": "65000000",
+                    "description": "Total amount of LSK that have been forged in this Block.\nConsists of fees and the reward.\n"
+                },
+                "isFinal": {
+                    "type": "boolean",
+                    "example": "true"
+                },
+                "maxHeightPreviouslyForged": {
+                    "type": "integer",
+                    "example": 559421
+                },
+                "maxHeightPrevoted": {
+                    "type": "integer",
+                    "example": 559434
+                },
+                "seedReveal": {
+                    "type": "string",
+                    "example": "602f24d8b0e99d7d700430447df38dc9"
+                }
+            }
+        },
+        "BlocksWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "description": "List of blocks",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Block"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/Pagination"
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        },
+        "FeeEstimateEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "description": "Number of items returned in the request.",
+                    "properties": {
+                        "feeEstimatePerByte": {
+                            "type": "object",
+                            "description": "Estimated fees based on priority",
+                            "properties": {
+                                "low": {
+                                    "type": "integer",
+                                    "description": "low estimated fees",
+                                    "example": 0
+                                },
+                                "medium": {
+                                    "type": "integer",
+                                    "description": "medium estimated fees",
+                                    "example": 1000
+                                },
+                                "high": {
+                                    "type": "integer",
+                                    "description": "high estimated fees",
+                                    "example": 2000
+                                }
+                            }
+                        },
+                        "baseFeeById": {
+                            "type": "object",
+                            "properties": {
+                                "5:0": {
+                                    "type": "string",
+                                    "description": "base fees by Id",
+                                    "example": 1000000000
+                                }
+                            }
+                        },
+                        "baseFeeByName": {
+                            "type": "object",
+                            "properties": {
+                                "5:0": {
+                                    "type": "string",
+                                    "description": "base fees by Name",
+                                    "example": 1000000000
+                                }
+                            }
+                        },
+                        "minFeePerByte": {
+                            "type": "integer",
+                            "example": 1000000000
+                        }
+                    }
+                },
+                "meta": {
+                    "type": "object",
+                    "required": [
+                        "lastUpdate",
+                        "lastBlockHeight",
+                        "lastBlockId"
+                    ],
+                    "properties": {
+                        "lastUpdate": {
+                            "type": "string",
+                            "example": "1616008148",
+                            "description": "timestamp"
+                        },
+                        "lastBlockHeight": {
+                            "type": "integer",
+                            "example": 25,
+                            "description": "Height of a block"
+                        },
+                        "blockId": {
+                            "type": "string",
+                            "example": "01967dba384998026fe028119bd099ecf073c05c045381500a93d1a7c7307e5b",
+                            "description": "Id of a block"
+                        }
+                    }
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        },
+        "forgers": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "type": "string",
+                    "example": "genesis_84",
+                    "description": ""
+                },
+                "totalVotesReceived": {
+                    "type": "string",
+                    "example": "109000000000",
+                    "description": "Total votes received"
+                },
+                "address": {
+                    "type": "string",
+                    "format": "address",
+                    "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                    "description": "The demo Address is the human readable representation of the accounts owners' public key.\nIt is 41 character long address thats begins with `lsk`.\n"
+                },
+                "minActiveHeight": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "isConsensusParticipant": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "nextForgingTime": {
+                    "type": "integer",
+                    "example": 1616058987,
+                    "description": "UNIX Timestamp"
+                }
+            }
+        },
+        "ForgersWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "description": "List of forgers",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/forgers"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/Pagination"
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        },
+        "market": {
+            "type": "object",
+            "required": [
+                "code",
+                "from",
+                "rate",
+                "to",
+                "updateTimestamp",
+                "sources"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "LSK_CHF"
+                },
+                "from": {
+                    "type": "string",
+                    "example": "LSK",
+                    "description": "from"
+                },
+                "rate": {
+                    "type": "string",
+                    "example": "2.4058",
+                    "description": "Current rate"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "CHF",
+                    "description": "to"
+                },
+                "sources": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "example": "kraken"
+                    }
+                },
+                "updateTimestamp": {
+                    "type": "integer",
+                    "example": 1623053809,
+                    "description": "Last updated timestamp."
+                }
+            }
+        },
+        "MarketPricesWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "description": "Array of news",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/market"
+                    }
+                },
+                "meta": {
+                    "type": "object",
+                    "required": [
+                        "count"
+                    ],
+                    "properties": {
+                        "count": {
+                            "type": "integer",
+                            "example": 1,
+                            "description": "count"
+                        }
+                    }
+                }
+            }
+        },
+        "Pagination": {
+            "type": "object",
+            "required": [
+                "count",
+                "offset"
+            ],
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "example": 100,
+                    "minimum": 0,
+                    "description": "Number of items returned in the request."
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 25,
+                    "minimum": 0,
+                    "description": "Defines how many items are skipped."
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 43749,
+                    "minimum": 0,
+                    "description": "Total number of items in the database."
+                }
+            }
+        },
+        "NetworkStatistics": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "description": "Number of items returned in the request.",
+                    "properties": {
+                        "basic": {
+                            "type": "object",
+                            "description": "Total number of items in the database.",
+                            "properties": {
+                                "connectedPeers": {
+                                    "type": "integer",
+                                    "description": "Number of connected peers",
+                                    "example": 134
+                                },
+                                "disconnectedPeers": {
+                                    "type": "integer",
+                                    "description": "Number of disconnected peers",
+                                    "example": 48
+                                },
+                                "totalPeers": {
+                                    "type": "integer",
+                                    "description": "Total number of peers",
+                                    "example": 181
+                                }
+                            }
+                        },
+                        "height": {
+                            "type": "object",
+                            "description": "Number of nodes on the given height.",
+                            "properties": {
+                                "7982598": {
+                                    "type": "integer",
+                                    "example": 24
+                                }
+                            }
+                        },
+                        "networkVersion": {
+                            "type": "object",
+                            "description": "Number of nodes on the given demo Core versions.",
+                            "properties": {
+                                "2.0": {
+                                    "type": "integer",
+                                    "example": 12
+                                },
+                                "2.1": {
+                                    "type": "integer",
+                                    "example": 41
+                                }
+                            }
+                        }
+                    }
+                },
+                "meta": {
+                    "type": "object",
+                    "description": "Defines how many items are skipped."
+                },
+                "links": {
+                    "type": "object",
+                    "description": "Total number of items in the database."
+                }
+            }
+        },
+        "NetworkStatus": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta"
+            ],
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "description": "Number of items returned in the request.",
+                    "properties": {
+                        "height": {
+                            "type": "integer",
+                            "example": 16550779,
+                            "minimum": 0,
+                            "description": "Current block height"
+                        },
+                        "finalizedHeight": {
+                            "type": "integer",
+                            "example": 16550609,
+                            "minimum": 0,
+                            "description": "Last finalized block height"
+                        },
+                        "networkVersion": {
+                            "type": "string",
+                            "format": "networkVersion",
+                            "example": "3.0",
+                            "description": "Current network version"
+                        },
+                        "networkIdentifier": {
+                            "type": "string",
+                            "format": "networkIdentifier",
+                            "example": "4c09e6a781fc4c7bdb936ee815de8f94190f8a7519becd9de2081832be309a99",
+                            "description": "Network identifier"
+                        },
+                        "milestone": {
+                            "type": "string",
+                            "format": "milestone",
+                            "example": "4",
+                            "description": "Current milestone index. Check 'rewards.milestones' for all the milestones"
+                        },
+                        "currentReward": {
+                            "type": "string",
+                            "format": "currentReward",
+                            "example": "100000000",
+                            "description": "Current reward"
+                        },
+                        "rewards": {
+                            "type": "object",
+                            "properties": {
+                                "milestones": {
+                                    "type": "array",
+                                    "items": {
+                                        "example": [
+                                            "500000000",
+                                            "400000000",
+                                            "300000000",
+                                            "200000000",
+                                            "100000000"
+                                        ]
+                                    }
+                                },
+                                "offset": {
+                                    "type": "integer",
+                                    "example": 2160
+                                },
+                                "distance": {
+                                    "type": "integer",
+                                    "example": 3000000
+                                }
+                            }
+                        },
+                        "registeredModules": {
+                            "type": "array",
+                            "items": {
+                                "example": [
+                                    "token",
+                                    "sequence",
+                                    "keys",
+                                    "dpos",
+                                    "legacyAccount"
+                                ]
+                            },
+                            "description": "Array of all the current registered modules"
+                        },
+                        "moduleAssets": {
+                            "type": "array",
+                            "items": {
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "example": "2:0"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "token:transfer"
+                                    }
+                                }
+                            },
+                            "description": "Array of all current supported transaction types"
+                        },
+                        "blockTime": {
+                            "type": "integer",
+                            "example": 10
+                        },
+                        "communityIdentifier": {
+                            "type": "string",
+                            "example": "demo"
+                        },
+                        "minRemainingBalance": {
+                            "type": "string",
+                            "example": "5000000"
+                        },
+                        "maxPayloadLength": {
+                            "type": "integer",
+                            "example": 15360
+                        }
+                    }
+                },
+                "meta": {
+                    "type": "object",
+                    "required": [
+                        "lastUpdate",
+                        "lastBlockHeight",
+                        "lastBlockId"
+                    ],
+                    "properties": {
+                        "lastUpdate": {
+                            "type": "string",
+                            "example": "1632471013",
+                            "description": "Current timestamp"
+                        },
+                        "lastBlockHeight": {
+                            "type": "integer",
+                            "example": 16550779,
+                            "description": "Height of the current block"
+                        },
+                        "lastBlockId": {
+                            "type": "string",
+                            "example": "6266b07d18ef072896b79110a59fab4b0635796e870dba1783b21e296aaac36f",
+                            "description": "ID of the current block"
+                        }
+                    }
+                }
+            }
+        },
+        "news": {
+            "type": "object",
+            "required": [
+                "author",
+                "content",
+                "source",
+                "sourceId",
+                "createdAt",
+                "modifiedAt",
+                "title",
+                "url",
+                "image_url"
+            ],
+            "properties": {
+                "author": {
+                    "type": "string",
+                    "example": "demoHQ",
+                    "description": "Blog post author."
+                },
+                "content_t": {
+                    "type": "string",
+                    "example": "RT @newsbtc: demo.js 2021 Recap https://t.co/QpZOkBfrgA",
+                    "description": "Blog post text."
+                },
+                "source": {
+                    "type": "string",
+                    "example": "twitter_demo",
+                    "description": "Source name"
+                },
+                "source_id": {
+                    "type": "string",
+                    "example": "4584a7d2db15920e130eeaf1014f87c99b5af329",
+                    "description": "External ID of the blog post."
+                },
+                "createdAt": {
+                    "type": "integer",
+                    "example": 1623053809,
+                    "description": "Creation time."
+                },
+                "modifiedAt": {
+                    "type": "integer",
+                    "format": "hex",
+                    "example": 1623053809,
+                    "description": "Modification time."
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Financial Update for January 2021",
+                    "description": "Blog post title."
+                },
+                "url": {
+                    "type": "string",
+                    "format": "id",
+                    "example": "https://t.co/QpZOkBfrgA",
+                    "description": "The id of the previous block of the chain."
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://t.co/QpZOkBfrgA.jpg",
+                    "description": "Original URL with the blog post."
+                }
+            }
+        },
+        "NewsfeedWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "description": "Array of news items",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/news"
+                    }
+                },
+                "meta": {
+                    "type": "object",
+                    "required": [
+                        "count"
+                    ],
+                    "properties": {
+                        "count": {
+                            "type": "integer",
+                            "example": 1,
+                            "description": "count"
+                        }
+                    }
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        },
+        "Peer": {
+            "type": "object",
+            "required": [
+                "wsPort",
+                "state"
+            ],
+            "properties": {
+                "ip": {
+                    "type": "string",
+                    "example": "127.0.0.1",
+                    "format": "ip",
+                    "description": "IPv4 address of the peer node."
+                },
+                "port": {
+                    "type": "integer",
+                    "example": "4000",
+                    "format": "port",
+                    "description": "Port of the peer node."
+                },
+                "networkVersion": {
+                    "type": "string",
+                    "example": "2.0",
+                    "format": "networkVersion",
+                    "description": "Network version of demo Core that the peer node runs on."
+                },
+                "networkIdentifier": {
+                    "type": "string",
+                    "example": "258974416d58533227c6a3da1b6333f0541b06c65b41e45cf31926847a3db1ea",
+                    "format": "networkVersion",
+                    "description": "Network identifier"
+                },
+                "state": {
+                    "type": "integer",
+                    "example": 2,
+                    "format": "int32",
+                    "minimum": 0,
+                    "maximum": 2,
+                    "description": "The state of the Peer.\nAvailable values: Connected, Disconnected, Banned\n"
+                },
+                "height": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 8350681,
+                    "description": "Network height on the peer node.\nRepresents the current number of blocks in the chain on the peer node.\n"
+                },
+                "location": {
+                    "$ref": "#/definitions/Location"
+                }
+            }
+        },
+        "PeersWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "description": "List of peers",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Peer"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/Pagination"
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        },
+        "Location": {
+            "type": "object",
+            "properties": {
+                "countryCode": {
+                    "type": "string",
+                    "example": "DE",
+                    "description": "ISO 3166-1 country code."
+                },
+                "countryName": {
+                    "type": "string",
+                    "example": "Germany",
+                    "description": "Name of the country."
+                },
+                "hostname": {
+                    "type": "string",
+                    "example": "host.210.239.23.62.rev.coltfrance.com",
+                    "description": "Hostname associated with the node's IP."
+                },
+                "ip": {
+                    "type": "string",
+                    "example": "210.239.23.62",
+                    "description": "Node's IP address."
+                }
+            }
+        },
+        "Transaction": {
+            "type": "object",
+            "required": [
+                "id",
+                "moduleAssetId",
+                "moduleAssetName",
+                "fee",
+                "nonce",
+                "block",
+                "sender",
+                "signatures"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "id",
+                    "example": "f9593f101c4acafc3ede650ab4c10fa2ecb59b225813eddbbb17b47e96932e9b",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "Unique identifier of the transaction.\nDerived from the transaction signature.\n"
+                },
+                "moduleAssetId": {
+                    "type": "string",
+                    "example": "2:0",
+                    "description": "Combination of transaction module:asset Id.\n"
+                },
+                "moduleAssetName": {
+                    "type": "string",
+                    "example": "token:transfer",
+                    "description": "Combination of transaction module:asset Name.\n"
+                },
+                "fee": {
+                    "type": "string",
+                    "example": "1000000",
+                    "description": "Transaction fee associated with this transaction.\n"
+                },
+                "nonce": {
+                    "type": "string",
+                    "example": "0"
+                },
+                "block": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "format": "id",
+                            "minLength": 1,
+                            "maxLength": 64,
+                            "example": "01967dba384998026fe028119bd099ecf073c05c045381500a93d1a7c7307e5b",
+                            "description": "Unique identifier of the block.\nDerived from the block signature.\n"
+                        },
+                        "height": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "example": 8350681,
+                            "description": "The height of the network, at the moment where this transaction was included in the blockchain.\n"
+                        },
+                        "timestamp": {
+                            "type": "integer",
+                            "example": 1613323667,
+                            "description": "UNIX Timestamp"
+                        }
+                    }
+                },
+                "sender": {
+                    "type": "object",
+                    "properties": {
+                        "publicKey": {
+                            "type": "string",
+                            "format": "publicKey",
+                            "example": "b1d6bc6c7edd0673f5fed0681b73de6eb70539c21278b300f07ade277e1962cd",
+                            "description": "The public key is derived from the private key of the owner of the account.\nIt can be used to validate that the private key belongs to the owner, but not provide access to the owners private key.\n"
+                        },
+                        "address": {
+                            "type": "string",
+                            "format": "address",
+                            "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                            "description": "The demo Address is the human readable representation of the accounts owners' public key.\nIt is 41 character long address thats begins with `lsk`.\n"
+                        }
+                    }
+                },
+                "signatures": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "signature",
+                        "example": "72c9b2aa734ec1b97549718ddf0d4737fd38a7f0fd105ea28486f2d989e9b3e399238d81a93aa45c27309d91ce604a5db9d25c9c90a138821f2011bc6636c60a",
+                        "description": "If the transaction is a multisignature transaction, all signatures of the members of the corresponding multisignature group will be listed here."
+                    }
+                },
+                "asset": {
+                    "type": "object",
+                    "properties": {
+                        "amount": {
+                            "type": "string",
+                            "example": "100003490",
+                            "description": "Amount of demo to be transferred in this transaction.\n"
+                        },
+                        "recipientAddress": {
+                            "type": "string",
+                            "format": "address",
+                            "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                            "description": "The demo Address is the human readable representation of the accounts owners' public key.\nIt is 41 character long address thats begins with `lsk`.\n"
+                        },
+                        "data": {
+                            "type": "string",
+                            "example": "test"
+                        }
+                    }
+                }
+            }
+        },
+        "TransactionSchemas": {
+            "type": "object",
+            "required": [
+                "moduleAssetId",
+                "moduleAssetName",
+                "schema",
+                "propeties"
+            ],
+            "properties": {
+                "moduleAssetId": {
+                    "type": "string",
+                    "example": "2:0",
+                    "description": "Combination of transaction module:asset Id.\n"
+                },
+                "moduleAssetName": {
+                    "type": "string",
+                    "example": "token:transfer",
+                    "description": "Combination of transaction module:asset Name.\n"
+                },
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "$id": {
+                            "type": "string",
+                            "format": "id",
+                            "minLength": 1,
+                            "example": "demo/transfer-asset",
+                            "description": "Unique identifier of the transaction schema\n"
+                        },
+                        "title": {
+                            "type": "string",
+                            "minimum": 1,
+                            "example": "Transfer transaction asset",
+                            "description": "Title of schema\n"
+                        },
+                        "type": {
+                            "type": "string",
+                            "example": "object",
+                            "description": "type of schema"
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": {
+                                "example": [
+                                    "amount",
+                                    "recipientAddress",
+                                    "data"
+                                ]
+                            }
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "amount": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dataType": {
+                                            "type": "string",
+                                            "example": "uint64"
+                                        },
+                                        "fieldNumber": {
+                                            "type": "integer",
+                                            "example": 1
+                                        }
+                                    }
+                                },
+                                "recipientAddress": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dataType": {
+                                            "type": "string",
+                                            "example": "bytes"
+                                        },
+                                        "fieldNumber": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "minLength": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "maxLength": {
+                                            "type": "integer",
+                                            "example": 20
+                                        }
+                                    }
+                                },
+                                "data": {
+                                    "type": "object",
+                                    "properties": {
+                                        "dataType": {
+                                            "type": "string",
+                                            "example": "bytes"
+                                        },
+                                        "fieldNumber": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "minLength": {
+                                            "type": "integer",
+                                            "example": 0
+                                        },
+                                        "maxLength": {
+                                            "type": "integer",
+                                            "example": 64
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "TransactionsWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "description": "List of transactions",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Transaction"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/Pagination"
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        },
+        "TransactionsStatisticsWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/TransactionsStatistics"
+                },
+                "meta": {
+                    "$ref": "#/definitions/Pagination"
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        },
+        "TransactionsStatistics": {
+            "type": "object",
+            "description": "Transactions statistics",
+            "required": [
+                "timeline",
+                "distributionByType",
+                "distributionByAmount"
+            ],
+            "properties": {
+                "timeline": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "timestamp",
+                            "date",
+                            "transactionCount",
+                            "volume"
+                        ],
+                        "properties": {
+                            "timestamp": {
+                                "type": "integer",
+                                "description": "UNIX timestamp representing the beginning of the aggregation interval",
+                                "example": 1556100060
+                            },
+                            "date": {
+                                "type": "string",
+                                "description": "Date representing the beginning of the aggregation interval",
+                                "example": "2019-11-27"
+                            },
+                            "transactionCount": {
+                                "type": "integer",
+                                "description": "Count of all transactions in the given time span",
+                                "example": "14447177193385"
+                            },
+                            "volume": {
+                                "type": "string",
+                                "description": "Sum of all transaction amounts and fees sent in the given time span (in Beddows unit)",
+                                "example": "14447177193385"
+                            }
+                        }
+                    }
+                },
+                "distributionByType": {
+                    "type": "object",
+                    "description": "Count of transactions by transaction type in the whole time interval"
+                },
+                "distributionByAmount": {
+                    "type": "object",
+                    "description": "Count of transactions by amount range in the whole time interval"
+                }
+            }
+        },
+        "postTransactionWithEnvelope": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Transaction payload was successfully passed to the network node"
+                },
+                "transactionId": {
+                    "type": "string",
+                    "example": "123456789",
+                    "description": "Transaction Id"
+                }
+            }
+        },
+        "TransactionsSchemaWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta",
+                "links"
+            ],
+            "properties": {
+                "data": {
+                    "description": "List of transaction schemas",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TransactionSchemas"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/Pagination"
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        },
+        "badRequestEnvelope": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Transaction payload was rejected by the network node"
+                }
+            }
+        },
+        "serverErrorEnvelope": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Unable to reach a network node"
+                }
+            }
+        },
+        "notFoundEnvelope": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Schema corresponding moduleAssetId: '3:1' not found."
+                }
+            }
+        },
+        "ExportScheduled": {
+            "type": "object",
+            "required": [
+                "address"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "format": "address",
+                    "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                    "description": "The demo Address is the human readable representation of the accounts owners' public key.\nIt is 41 character long address thats begins with `lsk`.\n"
+                },
+                "publicKey": {
+                    "type": "string",
+                    "format": "publicKey",
+                    "example": "b1d6bc6c7edd0673f5fed0681b73de6eb70539c21278b300f07ade277e1962cd",
+                    "description": "The public key is derived from the private key of the owner of the account.\nIt can be used to validate that the private key belongs to the owner, but not provide access to the owners private key.\n"
+                },
+                "interval": {
+                    "type": "string",
+                    "format": "interval",
+                    "example": "2020-10-01:2020-10-31",
+                    "description": "The date interval for which the transactions need to be exported.\n"
+                }
+            }
+        },
+        "ExportScheduledWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta"
+            ],
+            "properties": {
+                "data": {
+                    "description": "Transaction history export information",
+                    "type": "object",
+                    "$ref": "#/definitions/ExportScheduled"
+                },
+                "meta": {
+                    "type": "object",
+                    "properties": {
+                        "ready": {
+                            "type": "boolean",
+                            "example": "false",
+                            "description": "False when scheduled to export. True when already exported and available for download"
+                        }
+                    }
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        },
+        "ExportFile": {
+            "type": "object",
+            "required": [
+                "address"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "format": "address",
+                    "example": "lskdwsyfmcko6mcd357446yatromr9vzgu7eb8y99",
+                    "description": "The demo Address is the human readable representation of the accounts owners' public key.\nIt is 41 character long address thats begins with `lsk`.\n"
+                },
+                "publicKey": {
+                    "type": "string",
+                    "format": "publicKey",
+                    "example": "b1d6bc6c7edd0673f5fed0681b73de6eb70539c21278b300f07ade277e1962cd",
+                    "description": "The public key is derived from the private key of the owner of the account.\nIt can be used to validate that the private key belongs to the owner, but not provide access to the owners private key.\n"
+                },
+                "interval": {
+                    "type": "string",
+                    "format": "interval",
+                    "example": "2020-10-01:2020-10-31",
+                    "description": "The date interval for which the transactions need to be exported.\n"
+                },
+                "fileName": {
+                    "type": "string",
+                    "format": "fileName",
+                    "example": "transactions_<address>_<from>_<to>.csv",
+                    "description": "The name of the file containing the exported account transaction history.\n"
+                },
+                "fileUrl": {
+                    "type": "string",
+                    "format": "fileUrl",
+                    "example": "/api/v2/exports/transactions_<address>_<from>_<to>.csv",
+                    "description": "The file URL path containing the exported account transaction history.\n"
+                }
+            }
+        },
+        "ExportFileUrlWithEnvelope": {
+            "type": "object",
+            "required": [
+                "data",
+                "meta"
+            ],
+            "properties": {
+                "data": {
+                    "description": "Transaction history export information",
+                    "type": "object",
+                    "$ref": "#/definitions/ExportFile"
+                },
+                "meta": {
+                    "type": "object",
+                    "properties": {
+                        "ready": {
+                            "type": "boolean",
+                            "example": "true",
+                            "description": "True when already exported and available for download. False when scheduled to export"
+                        }
+                    }
+                },
+                "links": {
+                    "type": "object"
+                }
+            }
+        }
+    },
+    "responses": {
+        "badParameter": {
+            "description": "Bad input parameter"
+        },
+        "notFound": {
+            "description": "Not found"
+        }
+    }
+}
